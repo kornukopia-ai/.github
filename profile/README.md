@@ -1,14 +1,4 @@
-## Hi there 👋
+## 화수분AI
 
-<!--
-
-**Here are some ideas to get you started:**
-
-🙋‍♀️ A short introduction - what is your organization all about?
-🌈 Contribution guidelines - how can the community get involved?
-👩‍💻 Useful resources - where can the community find your docs? Is there anything else the community should know?
-🍿 Fun facts - what does your team eat for breakfast?
-🧙 Remember, you can do mighty things with the power of [Markdown](https://docs.github.com/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
--->
-
-화수분AI의 Repository 입니다
+- 화수분AI는 여의도기반 패밀리 오피스의 자회사입니다
+- 투자전문가의 노하우와 AI기술을 이어, 급변하는 투자 환경에서 초과수익을 모색합니다

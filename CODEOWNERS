@@ -1,0 +1,5 @@
+# 1. GitHub Actions yml protection
+/.github/workflows/ @koreanjyp
+
+# 2. CODEOWNERS Protection
+/CODEOWNERS @koreanjyp

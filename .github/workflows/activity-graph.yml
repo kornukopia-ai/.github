@@ -1,0 +1,56 @@
+name: Generate Activity Graph
+on:
+  schedule:
+    - cron: "0 23 * * 4"  # 금요일 08:00 KST
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: github-svg-updates
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: StaticRunner
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Install dependencies
+        run: pip install requests
+      
+      - name: Generate activity graphs
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTIVITY_VISUALIZATION }}
+        run: |
+          python scripts/generate_activity_graph.py
+          python scripts/generate_lines_stats.py
+      
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add commit-activity.svg lines-of-code.svg
+          git diff --staged --quiet && echo "No changes" && exit 0
+          git commit -m "chore: update activity graphs"
+          
+          # 충돌 시 재시도 (최대 3회)
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && exit 0
+            echo "Retry $i: rebase failed, resetting..."
+            git rebase --abort 2>/dev/null || true
+            git fetch origin main
+            git reset --soft origin/main
+            git add commit-activity.svg lines-of-code.svg
+            git diff --staged --quiet || git commit -m "chore: update activity graphs"
+          done
+          echo "Failed after 3 retries" && exit 1
+

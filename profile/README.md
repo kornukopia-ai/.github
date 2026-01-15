@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="./scripts/logo.png" alt="화수분AI" width="40" />&nbsp;화수분AI
+  <img src="../scripts/logo.png" alt="화수분AI" width="40" />&nbsp;화수분AI
 </h1>
 
 <div align="center">

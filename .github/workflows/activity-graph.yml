@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.UPDATEREPO_TOKEN }}
       
       - uses: actions/setup-python@v5
         with:
@@ -29,7 +30,7 @@ jobs:
       
       - name: Generate activity graphs
         env:
-          GITHUB_TOKEN: ${{ secrets.ACTIVITY_VISUALIZATION }}
+          GITHUB_TOKEN: ${{ secrets.READREPOS_ACCESS_TOKEN }}
         run: |
           python scripts/generate_activity_graph.py
           python scripts/generate_lines_stats.py

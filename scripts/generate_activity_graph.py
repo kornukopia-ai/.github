@@ -4,7 +4,7 @@ Organization의 commit activity를 가져와서 활동 그래프 SVG 생성
 """
 import os
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
@@ -44,8 +44,10 @@ def get_commit_activity(repo_name):
 
 
 def get_daily_commits(repo_name, days=90):
-    """레포의 일별 커밋 수 가져오기"""
-    since = (datetime.now() - timedelta(days=days)).isoformat() + "Z"
+    """레포의 일별 커밋 수 가져오기 (UTC 기준)"""
+    # UTC 기준으로 시간 계산
+    now_utc = datetime.now(timezone.utc)
+    since = (now_utc - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
     commits_by_day = defaultdict(int)
     page = 1
     
@@ -59,6 +61,7 @@ def get_daily_commits(repo_name, days=90):
             break
         
         for commit in data:
+            # UTC 날짜 그대로 사용 (ISO 8601 형식에서 날짜 부분만 추출)
             date_str = commit["commit"]["author"]["date"][:10]
             commits_by_day[date_str] += 1
         
@@ -71,9 +74,9 @@ def get_daily_commits(repo_name, days=90):
 
 def generate_full_activity_svg(daily_data, width=400, height=120):
     """전체 활동 그래프 SVG 생성 (GitHub 스타일)"""
-    # 최근 90일 데이터 정리
-    today = datetime.now().date()
-    dates = [(today - timedelta(days=i)).isoformat() for i in range(89, -1, -1)]
+    # 최근 90일 데이터 정리 (UTC 기준)
+    today_utc = datetime.now(timezone.utc).date()
+    dates = [(today_utc - timedelta(days=i)).isoformat() for i in range(89, -1, -1)]
     values = [daily_data.get(d, 0) for d in dates]
     
     max_val = max(values) if values and max(values) > 0 else 1

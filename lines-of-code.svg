@@ -80,8 +80,8 @@
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +77.3k</span>
-                                <span class="deleted"> -47.1k</span>
+                                <span class="added"> +78.4k</span>
+                                <span class="deleted"> -47.3k</span>
                             </div>
                             <span> </span>
                         </div>
@@ -136,16 +136,16 @@
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +3.1k</span>
-                                <span class="deleted"> -634</span>
+                                <span class="added"> +3.2k</span>
+                                <span class="deleted"> -644</span>
                             </div>
                             <span> </span>
                         </div>
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +997</span>
-                                <span class="deleted"> -112</span>
+                                <span class="added"> +1.0k</span>
+                                <span class="deleted"> -145</span>
                             </div>
                             <span> </span>
                         </div>
@@ -161,7 +161,7 @@
                 </div>
             </section>
             <footer>
-                <span>Total: +270.7k / -76.8k · 11 repositories · 13 Feb 2026, 08:12:01 (Asia/Seoul)</span>
+                <span>Total: +271.8k / -77.1k · 11 repositories · 20 Feb 2026, 08:14:04 (Asia/Seoul)</span>
             </footer>
         </div>
         <div xmlns="http://www.w3.org/1999/xhtml" id="metrics-end"></div>

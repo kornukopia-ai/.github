@@ -145,7 +145,7 @@
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
                                 <span class="added"> +1.1k</span>
-                                <span class="deleted"> -189</span>
+                                <span class="deleted"> -209</span>
                             </div>
                             <span> </span>
                         </div>
@@ -161,7 +161,7 @@
                 </div>
             </section>
             <footer>
-                <span>Total: +300.0k / -98.5k · 11 repositories · 13 Mar 2026, 08:11:26 (Asia/Seoul)</span>
+                <span>Total: +300.1k / -98.5k · 11 repositories · 20 Mar 2026, 08:10:26 (Asia/Seoul)</span>
             </footer>
         </div>
         <div xmlns="http://www.w3.org/1999/xhtml" id="metrics-end"></div>

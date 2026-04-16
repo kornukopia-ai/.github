@@ -88,16 +88,16 @@
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +118.7k</span>
-                                <span class="deleted"> -8.7k</span>
+                                <span class="added"> +120.2k</span>
+                                <span class="deleted"> -9.5k</span>
                             </div>
                             <span> </span>
                         </div>
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +83.9k</span>
-                                <span class="deleted"> -31.6k</span>
+                                <span class="added"> +85.4k</span>
+                                <span class="deleted"> -33.2k</span>
                             </div>
                             <span> </span>
                         </div>
@@ -136,8 +136,8 @@
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +3.6k</span>
-                                <span class="deleted"> -1.1k</span>
+                                <span class="added"> +3.9k</span>
+                                <span class="deleted"> -1.2k</span>
                             </div>
                             <span> </span>
                         </div>
@@ -145,7 +145,7 @@
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
                                 <span class="added"> +1.2k</span>
-                                <span class="deleted"> -269</span>
+                                <span class="deleted"> -312</span>
                             </div>
                             <span> </span>
                         </div>
@@ -161,7 +161,7 @@
                 </div>
             </section>
             <footer>
-                <span>Total: +352.4k / -122.8k · 12 repositories · 10 Apr 2026, 08:23:31 (Asia/Seoul)</span>
+                <span>Total: +355.7k / -125.4k · 12 repositories · 17 Apr 2026, 08:19:03 (Asia/Seoul)</span>
             </footer>
         </div>
         <div xmlns="http://www.w3.org/1999/xhtml" id="metrics-end"></div>

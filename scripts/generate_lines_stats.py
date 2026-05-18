@@ -1,19 +1,44 @@
 #!/usr/bin/env python3
 """
 Organization의 모든 레포에서 Lines of Code 통계를 수집하여 SVG 생성
+
+GraphQL 기반: defaultBranch history의 commit별 additions/deletions 합산.
+기존 /stats/code_frequency REST 엔드포인트는 GitHub 측 캐시 무효화 시
+영구 202를 반환하는 케이스가 있어 GraphQL로 대체.
 """
 import os
 import requests
-import time
 from datetime import datetime, timezone, timedelta
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 ORG_NAME = "kornukopia-ai"
 
-headers = {
+REST_HEADERS = {
     "Authorization": f"token {GITHUB_TOKEN}",
     "Accept": "application/vnd.github.v3+json"
 }
+GRAPHQL_HEADERS = {
+    "Authorization": f"bearer {GITHUB_TOKEN}",
+    "Accept": "application/vnd.github.v3+json"
+}
+GRAPHQL_URL = "https://api.github.com/graphql"
+
+HISTORY_QUERY = """
+query($owner: String!, $repo: String!, $cursor: String) {
+  repository(owner: $owner, name: $repo) {
+    defaultBranchRef {
+      target {
+        ... on Commit {
+          history(first: 100, after: $cursor) {
+            pageInfo { hasNextPage endCursor }
+            edges { node { additions deletions } }
+          }
+        }
+      }
+    }
+  }
+}
+"""
 
 
 def get_org_repos():
@@ -22,7 +47,7 @@ def get_org_repos():
     page = 1
     while True:
         url = f"https://api.github.com/orgs/{ORG_NAME}/repos?type=all&per_page=100&page={page}"
-        resp = requests.get(url, headers=headers)
+        resp = requests.get(url, headers=REST_HEADERS)
         if resp.status_code != 200:
             print(f"Error fetching repos: {resp.status_code}")
             break
@@ -34,33 +59,42 @@ def get_org_repos():
     return repos
 
 
-def get_code_frequency(repo_name):
-    """레포의 주간 코드 변화량 가져오기 - 성공할 때까지 재시도"""
-    url = f"https://api.github.com/repos/{ORG_NAME}/{repo_name}/stats/code_frequency"
-    
-    max_wait = 60  # 최대 60초까지 대기
-    waited = 0
-    
-    while waited < max_wait:
-        resp = requests.get(url, headers=headers)
-        if resp.status_code == 200:
-            data = resp.json()
-            if data:  # 빈 배열이 아닌 경우만 반환
-                return data
-            # 빈 배열이면 계속 대기
-        elif resp.status_code == 202:
-            pass  # 계산 중 - 계속 대기
-        else:
-            print(f"    Error for {repo_name}: {resp.status_code}")
-            return []
-        
-        wait_time = 5
-        print(f"    Waiting for {repo_name}... ({waited + wait_time}s)")
-        time.sleep(wait_time)
-        waited += wait_time
-    
-    print(f"    Timeout for {repo_name}")
-    return []
+def get_repo_lines(repo_name):
+    """defaultBranch 전체 history에서 additions/deletions 합산"""
+    additions = 0
+    deletions = 0
+    cursor = None
+
+    while True:
+        resp = requests.post(
+            GRAPHQL_URL,
+            json={"query": HISTORY_QUERY,
+                  "variables": {"owner": ORG_NAME, "repo": repo_name, "cursor": cursor}},
+            headers=GRAPHQL_HEADERS,
+        )
+        if resp.status_code != 200:
+            print(f"    HTTP {resp.status_code} for {repo_name}")
+            return None
+
+        payload = resp.json()
+        if "errors" in payload:
+            print(f"    GraphQL errors for {repo_name}: {payload['errors']}")
+            return None
+
+        ref = payload["data"]["repository"]["defaultBranchRef"]
+        if not ref:
+            return {"additions": 0, "deletions": 0}
+
+        history = ref["target"]["history"]
+        for edge in history["edges"]:
+            additions += edge["node"]["additions"]
+            deletions += edge["node"]["deletions"]
+
+        if not history["pageInfo"]["hasNextPage"]:
+            break
+        cursor = history["pageInfo"]["endCursor"]
+
+    return {"additions": additions, "deletions": deletions}
 
 
 def format_number(n):
@@ -194,43 +228,28 @@ def main():
     print(f"Fetching repos for {ORG_NAME}...")
     repos = get_org_repos()
     print(f"Found {len(repos)} repos")
-    
-    repo_names = [repo["name"] for repo in repos]
+
     repo_stats = {}
-    
-    # 모든 레포 데이터 수집 (최대 3라운드)
-    for round_num in range(3):
-        pending = [name for name in repo_names if name not in repo_stats]
-        if not pending:
-            break
-        
-        print(f"\n=== Round {round_num + 1}: {len(pending)} repos remaining ===")
-        
-        for repo_name in pending:
-            print(f"  Processing {repo_name}...")
-            
-            code_freq = get_code_frequency(repo_name)
-            
-            if code_freq:
-                total_additions = sum(week[1] for week in code_freq if len(week) >= 3)
-                total_deletions = sum(week[2] for week in code_freq if len(week) >= 3)
-                
-                if total_additions > 0 or total_deletions < 0:
-                    repo_stats[repo_name] = {
-                        'additions': total_additions,
-                        'deletions': total_deletions
-                    }
-                    print(f"    ✓ +{total_additions} / {total_deletions}")
-            
-            time.sleep(0.5)
-    
-    # 결과 확인
-    missing = [name for name in repo_names if name not in repo_stats]
-    print(f"\nTotal repos with data: {len(repo_stats)}/{len(repo_names)}")
-    if missing:
-        print(f"Missing: {missing}")
-    
-    # SVG 생성
+    failed = []
+
+    for repo in repos:
+        repo_name = repo["name"]
+        print(f"  Processing {repo_name}...")
+        stats = get_repo_lines(repo_name)
+
+        if stats is None:
+            failed.append(repo_name)
+            continue
+        if stats["additions"] == 0 and stats["deletions"] == 0:
+            continue
+
+        repo_stats[repo_name] = stats
+        print(f"    ✓ +{stats['additions']} / -{stats['deletions']}")
+
+    print(f"\nTotal repos with data: {len(repo_stats)}/{len(repos)}")
+    if failed:
+        print(f"Failed: {failed}")
+
     svg = generate_lines_svg(repo_stats)
     with open("lines-of-code.svg", "w") as f:
         f.write(svg)

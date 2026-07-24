@@ -7,6 +7,8 @@ GraphQL 기반: defaultBranch history의 commit별 additions/deletions 합산.
 영구 202를 반환하는 케이스가 있어 GraphQL로 대체.
 """
 import os
+import sys
+import time
 import requests
 from datetime import datetime, timezone, timedelta
 
@@ -41,22 +43,103 @@ query($owner: String!, $repo: String!, $cursor: String) {
 """
 
 
+RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+MAX_RETRIES = 5
+BACKOFF_BASE_SEC = 2
+BACKOFF_CAP_SEC = 60
+REQUEST_TIMEOUT_SEC = 30
+
+
+class GitHubAPIError(Exception):
+    """API 호출이 재시도 후에도 복구되지 않은 경우."""
+
+
+def _is_rate_limited(resp):
+    if resp.status_code == 429:
+        return True
+    return resp.status_code == 403 and (
+        resp.headers.get("X-RateLimit-Remaining") == "0"
+        or "Retry-After" in resp.headers
+    )
+
+
+def _retry_delay(resp, attempt):
+    delay = min(BACKOFF_CAP_SEC, BACKOFF_BASE_SEC * (2 ** attempt))
+    retry_after = resp.headers.get("Retry-After")
+    if retry_after and retry_after.isdigit():
+        return max(delay, int(retry_after))
+    if resp.status_code == 403 and resp.headers.get("X-RateLimit-Remaining") == "0":
+        reset = resp.headers.get("X-RateLimit-Reset")
+        if reset and reset.isdigit():
+            return max(0, int(reset) - int(time.time())) + 1
+    return delay
+
+
+def github_request(method, url, **kwargs):
+    """5xx·rate limit·네트워크 오류에 지수 backoff로 재시도.
+
+    재시도 후에도 복구되지 않으면 GitHubAPIError를 던진다. 4xx 등 재시도가
+    무의미한 응답은 그대로 반환하여 호출부가 상태코드로 판단하게 한다.
+    """
+    kwargs.setdefault("timeout", REQUEST_TIMEOUT_SEC)
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            resp = requests.request(method, url, **kwargs)
+        except requests.RequestException as exc:
+            if attempt >= MAX_RETRIES:
+                raise GitHubAPIError(f"{method} {url}: {MAX_RETRIES}회 재시도 후 실패 ({exc})") from exc
+            time.sleep(min(BACKOFF_CAP_SEC, BACKOFF_BASE_SEC * (2 ** attempt)))
+            continue
+
+        if resp.status_code in RETRYABLE_STATUS or _is_rate_limited(resp):
+            if attempt >= MAX_RETRIES:
+                raise GitHubAPIError(f"{method} {url}: {MAX_RETRIES}회 재시도 후에도 HTTP {resp.status_code}")
+            time.sleep(_retry_delay(resp, attempt))
+            continue
+
+        return resp
+    raise GitHubAPIError(f"{method} {url}: 재시도 로직 오류")
+
+
 def get_org_repos():
     """Organization의 모든 레포 가져오기 (private 포함)"""
     repos = []
     page = 1
     while True:
         url = f"https://api.github.com/orgs/{ORG_NAME}/repos?type=all&per_page=100&page={page}"
-        resp = requests.get(url, headers=REST_HEADERS)
+        resp = github_request("GET", url, headers=REST_HEADERS)
         if resp.status_code != 200:
-            print(f"Error fetching repos: {resp.status_code}")
-            break
+            raise GitHubAPIError(f"레포 목록 조회 실패 (page {page}): HTTP {resp.status_code}")
         data = resp.json()
         if not data:
             break
         repos.extend(data)
         page += 1
     return repos
+
+
+def _graphql_history_page(repo_name, cursor):
+    """history 한 페이지 조회. RATE_LIMITED 에러는 backoff 재시도, 그 외 실패는 GitHubAPIError."""
+    for attempt in range(MAX_RETRIES + 1):
+        resp = github_request(
+            "POST", GRAPHQL_URL,
+            json={"query": HISTORY_QUERY,
+                  "variables": {"owner": ORG_NAME, "repo": repo_name, "cursor": cursor}},
+            headers=GRAPHQL_HEADERS,
+        )
+        if resp.status_code != 200:
+            raise GitHubAPIError(f"{repo_name} GraphQL HTTP {resp.status_code}")
+
+        payload = resp.json()
+        errors = payload.get("errors")
+        if errors:
+            if any(e.get("type") == "RATE_LIMITED" for e in errors) and attempt < MAX_RETRIES:
+                time.sleep(min(BACKOFF_CAP_SEC, BACKOFF_BASE_SEC * (2 ** attempt)))
+                continue
+            raise GitHubAPIError(f"{repo_name} GraphQL errors: {errors}")
+        return payload
+
+    raise GitHubAPIError(f"{repo_name} GraphQL: RATE_LIMITED 재시도 소진")
 
 
 def get_repo_lines(repo_name):
@@ -66,20 +149,7 @@ def get_repo_lines(repo_name):
     cursor = None
 
     while True:
-        resp = requests.post(
-            GRAPHQL_URL,
-            json={"query": HISTORY_QUERY,
-                  "variables": {"owner": ORG_NAME, "repo": repo_name, "cursor": cursor}},
-            headers=GRAPHQL_HEADERS,
-        )
-        if resp.status_code != 200:
-            print(f"    HTTP {resp.status_code} for {repo_name}")
-            return None
-
-        payload = resp.json()
-        if "errors" in payload:
-            print(f"    GraphQL errors for {repo_name}: {payload['errors']}")
-            return None
+        payload = _graphql_history_page(repo_name, cursor)
 
         ref = payload["data"]["repository"]["defaultBranchRef"]
         if not ref:
@@ -224,31 +294,44 @@ def generate_lines_svg(repo_stats, width=480):
     return svg
 
 
+def _abort(message):
+    print(f"FATAL: {message}")
+    print("SVG를 갱신하지 않고 종료합니다 (오염 커밋 방지).")
+    sys.exit(1)
+
+
 def main():
     print(f"Fetching repos for {ORG_NAME}...")
-    repos = get_org_repos()
+    try:
+        repos = get_org_repos()
+    except GitHubAPIError as exc:
+        _abort(str(exc))
+
+    if not repos:
+        _abort("레포 목록이 비어 있습니다.")
+
     print(f"Found {len(repos)} repos")
 
     repo_stats = {}
-    failed = []
 
     for repo in repos:
         repo_name = repo["name"]
         print(f"  Processing {repo_name}...")
-        stats = get_repo_lines(repo_name)
+        try:
+            stats = get_repo_lines(repo_name)
+        except GitHubAPIError as exc:
+            _abort(str(exc))
 
-        if stats is None:
-            failed.append(repo_name)
-            continue
         if stats["additions"] == 0 and stats["deletions"] == 0:
             continue
 
         repo_stats[repo_name] = stats
         print(f"    ✓ +{stats['additions']} / -{stats['deletions']}")
 
+    if not repo_stats:
+        _abort("데이터가 있는 레포가 없습니다.")
+
     print(f"\nTotal repos with data: {len(repo_stats)}/{len(repos)}")
-    if failed:
-        print(f"Failed: {failed}")
 
     svg = generate_lines_svg(repo_stats)
     with open("lines-of-code.svg", "w") as f:

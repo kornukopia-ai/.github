@@ -3,6 +3,8 @@
 Organization의 commit activity를 가져와서 활동 그래프 SVG 생성
 """
 import os
+import sys
+import time
 import requests
 from datetime import datetime, timedelta, timezone
 from collections import defaultdict
@@ -15,6 +17,63 @@ headers = {
     "Accept": "application/vnd.github.v3+json"
 }
 
+RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+MAX_RETRIES = 5
+BACKOFF_BASE_SEC = 2
+BACKOFF_CAP_SEC = 60
+REQUEST_TIMEOUT_SEC = 30
+
+
+class GitHubAPIError(Exception):
+    """API 호출이 재시도 후에도 복구되지 않은 경우."""
+
+
+def _is_rate_limited(resp):
+    if resp.status_code == 429:
+        return True
+    return resp.status_code == 403 and (
+        resp.headers.get("X-RateLimit-Remaining") == "0"
+        or "Retry-After" in resp.headers
+    )
+
+
+def _retry_delay(resp, attempt):
+    delay = min(BACKOFF_CAP_SEC, BACKOFF_BASE_SEC * (2 ** attempt))
+    retry_after = resp.headers.get("Retry-After")
+    if retry_after and retry_after.isdigit():
+        return max(delay, int(retry_after))
+    if resp.status_code == 403 and resp.headers.get("X-RateLimit-Remaining") == "0":
+        reset = resp.headers.get("X-RateLimit-Reset")
+        if reset and reset.isdigit():
+            return max(0, int(reset) - int(time.time())) + 1
+    return delay
+
+
+def github_request(method, url, **kwargs):
+    """5xx·rate limit·네트워크 오류에 지수 backoff로 재시도.
+
+    재시도 후에도 복구되지 않으면 GitHubAPIError를 던진다. 4xx 등 재시도가
+    무의미한 응답은 그대로 반환하여 호출부가 상태코드로 판단하게 한다.
+    """
+    kwargs.setdefault("timeout", REQUEST_TIMEOUT_SEC)
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            resp = requests.request(method, url, **kwargs)
+        except requests.RequestException as exc:
+            if attempt >= MAX_RETRIES:
+                raise GitHubAPIError(f"{method} {url}: {MAX_RETRIES}회 재시도 후 실패 ({exc})") from exc
+            time.sleep(min(BACKOFF_CAP_SEC, BACKOFF_BASE_SEC * (2 ** attempt)))
+            continue
+
+        if resp.status_code in RETRYABLE_STATUS or _is_rate_limited(resp):
+            if attempt >= MAX_RETRIES:
+                raise GitHubAPIError(f"{method} {url}: {MAX_RETRIES}회 재시도 후에도 HTTP {resp.status_code}")
+            time.sleep(_retry_delay(resp, attempt))
+            continue
+
+        return resp
+    raise GitHubAPIError(f"{method} {url}: 재시도 로직 오류")
+
 
 def get_org_repos():
     """Organization의 모든 레포 가져오기 (private 포함)"""
@@ -22,25 +81,15 @@ def get_org_repos():
     page = 1
     while True:
         url = f"https://api.github.com/orgs/{ORG_NAME}/repos?type=all&per_page=100&page={page}"
-        resp = requests.get(url, headers=headers)
+        resp = github_request("GET", url, headers=headers)
         if resp.status_code != 200:
-            print(f"Error fetching repos: {resp.status_code}")
-            break
+            raise GitHubAPIError(f"레포 목록 조회 실패 (page {page}): HTTP {resp.status_code}")
         data = resp.json()
         if not data:
             break
         repos.extend(data)
         page += 1
     return repos
-
-
-def get_commit_activity(repo_name):
-    """레포의 주간 commit activity 가져오기 (최근 52주)"""
-    url = f"https://api.github.com/repos/{ORG_NAME}/{repo_name}/stats/commit_activity"
-    resp = requests.get(url, headers=headers)
-    if resp.status_code == 200:
-        return resp.json()
-    return []
 
 
 def get_daily_commits(repo_name, days=90):
@@ -53,13 +102,15 @@ def get_daily_commits(repo_name, days=90):
     
     while True:
         url = f"https://api.github.com/repos/{ORG_NAME}/{repo_name}/commits?since={since}&per_page=100&page={page}"
-        resp = requests.get(url, headers=headers)
-        if resp.status_code != 200:
+        resp = github_request("GET", url, headers=headers)
+        if resp.status_code == 409:  # 빈 레포: 커밋 0으로 처리
             break
+        if resp.status_code != 200:
+            raise GitHubAPIError(f"{repo_name} 커밋 조회 실패 (page {page}): HTTP {resp.status_code}")
         data = resp.json()
         if not data:
             break
-        
+
         for commit in data:
             # UTC 날짜 그대로 사용 (ISO 8601 형식에서 날짜 부분만 추출)
             date_str = commit["commit"]["author"]["date"][:10]
@@ -138,21 +189,37 @@ def generate_full_activity_svg(daily_data, width=400, height=120):
     return "\n".join(svg_parts)
 
 
+def _abort(message):
+    print(f"FATAL: {message}")
+    print("SVG를 갱신하지 않고 종료합니다 (오염 커밋 방지).")
+    sys.exit(1)
+
+
 def main():
     print(f"Fetching repos for {ORG_NAME}...")
-    repos = get_org_repos()
+    try:
+        repos = get_org_repos()
+    except GitHubAPIError as exc:
+        _abort(str(exc))
+
+    if not repos:
+        _abort("레포 목록이 비어 있습니다.")
+
     print(f"Found {len(repos)} repos")
-    
+
     # 모든 레포의 일별 커밋 합산
     all_daily_commits = defaultdict(int)
-    
+
     for repo in repos:
         repo_name = repo["name"]
         print(f"  Processing {repo_name}...")
-        daily = get_daily_commits(repo_name, days=90)
+        try:
+            daily = get_daily_commits(repo_name, days=90)
+        except GitHubAPIError as exc:
+            _abort(str(exc))
         for date, count in daily.items():
             all_daily_commits[date] += count
-    
+
     print(f"Total commit days: {len(all_daily_commits)}")
     
     # 전체 활동 그래프 SVG

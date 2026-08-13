@@ -88,15 +88,15 @@
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +271.8k</span>
-                                <span class="deleted"> -137.2k</span>
+                                <span class="added"> +277.2k</span>
+                                <span class="deleted"> -148.1k</span>
                             </div>
                             <span> </span>
                         </div>
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +213.7k</span>
+                                <span class="added"> +213.9k</span>
                                 <span class="deleted"> -90.4k</span>
                             </div>
                             <span> </span>
@@ -128,7 +128,7 @@
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +24.3k</span>
+                                <span class="added"> +24.6k</span>
                                 <span class="deleted"> -7.5k</span>
                             </div>
                             <span> </span>
@@ -161,7 +161,7 @@
                 </div>
             </section>
             <footer>
-                <span>Total: +1.6M / -882.8k · 15 repositories · 13 Aug 2026, 10:43:29 (Asia/Seoul)</span>
+                <span>Total: +1.6M / -893.9k · 15 repositories · 14 Aug 2026, 08:16:24 (Asia/Seoul)</span>
             </footer>
         </div>
         <div xmlns="http://www.w3.org/1999/xhtml" id="metrics-end"></div>

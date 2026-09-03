@@ -55,25 +55,25 @@
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
                                 <path fill-rule="evenodd" d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM4 8a4 4 0 118 0 4 4 0 01-8 0z"/>
                             </svg>
-                            <span class="diff-handle">kornukopia-ai/common</span>
-                        </div>
-                        <div class="field">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
-                                <path fill-rule="evenodd" d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM4 8a4 4 0 118 0 4 4 0 01-8 0z"/>
-                            </svg>
                             <span class="diff-handle">kornukopia-ai/reviewbot</span>
                         </div>
                         <div class="field">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
                                 <path fill-rule="evenodd" d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM4 8a4 4 0 118 0 4 4 0 01-8 0z"/>
                             </svg>
-                            <span class="diff-handle">kornukopia-ai/api-gateway</span>
+                            <span class="diff-handle">kornukopia-ai/common</span>
                         </div>
                         <div class="field">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
                                 <path fill-rule="evenodd" d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM4 8a4 4 0 118 0 4 4 0 01-8 0z"/>
                             </svg>
                             <span class="diff-handle">kornukopia-ai/ml</span>
+                        </div>
+                        <div class="field">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+                                <path fill-rule="evenodd" d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM4 8a4 4 0 118 0 4 4 0 01-8 0z"/>
+                            </svg>
+                            <span class="diff-handle">kornukopia-ai/api-gateway</span>
                         </div>
                     </section>
                     <section>
@@ -88,32 +88,32 @@
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +289.1k</span>
-                                <span class="deleted"> -156.5k</span>
+                                <span class="added"> +293.7k</span>
+                                <span class="deleted"> -159.5k</span>
+                            </div>
+                            <span> </span>
+                        </div>
+                        <div class="field">
+                            <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div><div class="diff-box deleted"></div>
+                            <div class="diff-stats">
+                                <span class="added"> +223.3k</span>
+                                <span class="deleted"> -96.2k</span>
                             </div>
                             <span> </span>
                         </div>
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +218.5k</span>
-                                <span class="deleted"> -92.8k</span>
+                                <span class="added"> +54.0k</span>
+                                <span class="deleted"> -20.4k</span>
                             </div>
                             <span> </span>
                         </div>
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +52.9k</span>
-                                <span class="deleted"> -20.0k</span>
-                            </div>
-                            <span> </span>
-                        </div>
-                        <div class="field">
-                            <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
-                            <div class="diff-stats">
-                                <span class="added"> +49.1k</span>
-                                <span class="deleted"> -13.1k</span>
+                                <span class="added"> +51.7k</span>
+                                <span class="deleted"> -14.0k</span>
                             </div>
                             <span> </span>
                         </div>
@@ -128,7 +128,15 @@
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +25.0k</span>
+                                <span class="added"> +25.7k</span>
+                                <span class="deleted"> -7.7k</span>
+                            </div>
+                            <span> </span>
+                        </div>
+                        <div class="field">
+                            <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
+                            <div class="diff-stats">
+                                <span class="added"> +25.2k</span>
                                 <span class="deleted"> -7.8k</span>
                             </div>
                             <span> </span>
@@ -136,24 +144,16 @@
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +20.8k</span>
-                                <span class="deleted"> -7.1k</span>
+                                <span class="added"> +16.3k</span>
+                                <span class="deleted"> -3.4k</span>
                             </div>
                             <span> </span>
                         </div>
                         <div class="field">
                             <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
                             <div class="diff-stats">
-                                <span class="added"> +14.5k</span>
-                                <span class="deleted"> -3.9k</span>
-                            </div>
-                            <span> </span>
-                        </div>
-                        <div class="field">
-                            <div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box added"></div><div class="diff-box deleted"></div>
-                            <div class="diff-stats">
-                                <span class="added"> +14.3k</span>
-                                <span class="deleted"> -3.0k</span>
+                                <span class="added"> +15.6k</span>
+                                <span class="deleted"> -4.1k</span>
                             </div>
                             <span> </span>
                         </div>
@@ -161,7 +161,7 @@
                 </div>
             </section>
             <footer>
-                <span>Total: +1.6M / -908.4k · 15 repositories · 28 Aug 2026, 10:42:33 (Asia/Seoul)</span>
+                <span>Total: +1.6M / -917.4k · 15 repositories · 04 Sep 2026, 08:08:00 (Asia/Seoul)</span>
             </footer>
         </div>
         <div xmlns="http://www.w3.org/1999/xhtml" id="metrics-end"></div>
